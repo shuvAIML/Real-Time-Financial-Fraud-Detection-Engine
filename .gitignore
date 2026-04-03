@@ -1,0 +1,16 @@
+# Environments
+venv/
+env/
+.env
+
+# Python junk
+__pycache__/
+*.py[cod]
+
+# Large Data & Models (GitHub has a 100MB limit)
+data/creditcard.csv
+models/*.pkl
+
+# OS files
+.DS_Store
+Thumbs.db

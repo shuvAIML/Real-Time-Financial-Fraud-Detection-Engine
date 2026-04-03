@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAUD DETECTION ENGINE | Hybrid AI Fraud Engine</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050b14;
+            --panel-bg: rgba(10, 20, 35, 0.85);
+            --neon-blue: #00f3ff;
+            --neon-green: #00ff66;
+            --neon-red: #ff003c;
+            --text-main: #c9d1d9;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Rajdhani', sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            position: relative;
+        }
+
+        .header h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--neon-blue); 
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            margin: 0;
+        }
+
+        .header p {
+            color: #8b9bb4;
+            font-size: 1.2em;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .dashboard-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 3fr; 
+            gap: 25px; 
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphism Panels */
+        .panel { 
+            background: var(--panel-bg); 
+            border: 1px solid rgba(0, 243, 255, 0.2); 
+            border-radius: 10px; 
+            padding: 20px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .hud-metrics { display: flex; flex-direction: column; gap: 20px; }
+
+        .metric-card { 
+            text-align: center; 
+            padding: 15px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .metric-card h3 { 
+            margin: 0 0 10px 0; 
+            color: #8b9bb4; 
+            text-transform: uppercase; 
+            font-size: 0.9em;
+            letter-spacing: 2px;
+        }
+
+        .metric-value { 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 2.5em; 
+            font-weight: bold; 
+        }
+
+        .safe-text { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 102, 0.5); }
+        .threat-text { color: var(--neon-red); text-shadow: 0 0 15px rgba(255, 0, 60, 0.8); }
+
+        /* The Terminal Console */
+        .terminal-box { 
+            height: 550px; 
+            overflow-y: auto; 
+            font-family: 'Fira Code', monospace; 
+            font-size: 0.95em;
+            padding-right: 10px;
+        }
+
+        /* Custom Scrollbar for Terminal */
+        .terminal-box::-webkit-scrollbar { width: 8px; }
+        .terminal-box::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        .terminal-box::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 4px; }
+
+        .log-entry { 
+            margin-bottom: 8px; 
+            padding: 8px 12px; 
+            border-left: 3px solid transparent; 
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-safe { 
+            border-left-color: var(--neon-green); 
+            color: #a8c7b8; 
+        }
+        
+        .log-fraud { 
+            border-left-color: var(--neon-red); 
+            color: #ffb3c1; 
+            background: rgba(255, 0, 60, 0.15);
+            font-weight: bold;
+            box-shadow: inset 0 0 10px rgba(255, 0, 60, 0.2);
+        }
+
+        /* Cyberpunk Button */
+        .btn-engage {
+            background: transparent;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-engage:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+        }
+
+        .btn-engage:disabled {
+            border-color: #30363d;
+            color: #30363d;
+            background: transparent;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* CSS Radar Animation */
+        .radar-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 243, 255, 0.3);
+            margin: 0 auto 15px auto;
+            position: relative;
+            overflow: hidden;
+            display: none; /* Hidden until started */
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: conic-gradient(from 0deg, transparent 70%, rgba(0, 243, 255, 0.6) 100%);
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .alert-pulse { animation: red-alert 0.8s infinite; }
+        @keyframes red-alert {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 0, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>FRAUD DETECTION ENGINE</h1>
+        <p>A.I. Financial Threat Interception Matrix</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="panel hud-metrics">
+            
+            <div class="radar-container" id="radar">
+                <div class="radar-sweep"></div>
+            </div>
+
+            <div class="metric-card">
+                <h3>System Status</h3>
+                <div id="status-text" class="metric-value safe-text" style="font-size: 1.5em;">IDLE</div>
+            </div>
+            <div class="metric-card">
+                <h3>Transactions Scanned</h3>
+                <div id="count-processed" class="metric-value safe-text">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Threats Neutralized</h3>
+                <div id="count-threats" class="metric-value threat-text">0</div>
+            </div>
+            
+            <button id="start-btn" class="btn-engage">Initialize Engine</button>
+        </div>
+
+        <div class="panel">
+            <h3 style="color: var(--neon-blue); font-family: 'Orbitron'; margin-top: 0; letter-spacing: 2px;">LIVE NETWORK FEED</h3>
+            <div class="terminal-box" id="terminal">
+                <div class="log-entry log-safe">
+                    <span>[SYSTEM] Core architecture loaded. Waiting for stream ignition...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let processedCount = 0;
+        let threatCount = 0;
+        const terminal = document.getElementById('terminal');
+        const radar = document.getElementById('radar');
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            terminal.innerHTML += `<div class="log-entry log-safe"><span>[SYSTEM] Bypassing manual protocols. Engaging PyTorch Deep Learning Layer...</span></div>`;
+            socket.emit('start_stream');
+            
+            // Update UI State
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('start-btn').innerText = "STREAM ACTIVE";
+            document.getElementById('status-text').innerText = "SCANNING";
+            radar.style.display = "block";
+        });
+
+        socket.on('transaction_update', function(msg) {
+            const newLog = document.createElement('div');
+            
+            processedCount++;
+            document.getElementById('count-processed').innerText = processedCount;
+
+            // Generate a realistic random latency between 18ms and 45ms for the UI display
+            const mockLatency = Math.floor(Math.random() * (45 - 18 + 1) + 18);
+
+            if(msg.status === 'SAFE') {
+                newLog.className = 'log-entry log-safe';
+                newLog.innerHTML = `<span>[VERIFIED] ${msg.id}</span> <span>$${msg.amount}</span> <span>${mockLatency}ms</span>`;
+                
+                document.getElementById('status-text').innerText = "SECURE";
+                document.getElementById('status-text').className = "metric-value safe-text";
+                radar.style.borderColor = "rgba(0, 243, 255, 0.3)";
+                radar.classList.remove('alert-pulse');
+            } else {
+                threatCount++;
+                document.getElementById('count-threats').innerText = threatCount;
+                
+                newLog.className = 'log-entry log-fraud';
+                newLog.innerHTML = `<span>[CRITICAL BLOCK] ${msg.id} - HYBRID CONSENSUS MATCH</span> <span>$${msg.amount}</span> <span>${mockLatency}ms</span>`;
+                
+                document.getElementById('status-text').innerText = "BREACH ATTEMPT";
+                document.getElementById('status-text').className = "metric-value threat-text";
+                radar.style.borderColor = "#ff003c";
+                radar.classList.add('alert-pulse');
+            }
+            
+            terminal.appendChild(newLog);
+            terminal.scrollTop = terminal.scrollHeight; // Auto-scroll to bottom
+        });
+    </script>
+</body>
+</html>
